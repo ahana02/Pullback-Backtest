@@ -70,10 +70,10 @@ The strategy does **not** trade all market conditions. It activates only when th
 
 ### 1. Regime Filter
 
-```python
+<!-- ```python
 df["regime_ma"]         = df["close"].rolling(200).mean()
 df["is_bullish_regime"] = df["close"] > df["regime_ma"]
-```
+``` -->
 
 - Price above the **200-bar moving average** → bullish regime active
 - No trades are taken when price is below the MA
@@ -83,12 +83,12 @@ df["is_bullish_regime"] = df["close"] > df["regime_ma"]
 
 ### 2. Entry — Confirmed Local Low
 
-```python
+<!-- ```python
 def is_local_low(df, i):
     at_low  = df["low"].iloc[i] <= df["rolling_low"].iloc[i] * 1.002
     upward  = df["close"].iloc[i + CONFIRM_BARS] > df["close"].iloc[i]
     return at_low and upward
-```
+``` -->
 
 A trade is entered when **both** conditions are true simultaneously:
 
