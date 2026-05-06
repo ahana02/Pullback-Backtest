@@ -1,10 +1,3 @@
-"""
-Structural Pullback Backtest
-============================
-A rule-based structural bullish pullback strategy backtested on 15-min OHLC data.
-Dataset: ohlc_data.csv  (2021-01-03 → 2023-12-31, ~3 years, 28,418 bars)
-"""
-
 import os
 import pandas as pd
 import numpy as np
@@ -13,10 +6,6 @@ import matplotlib.gridspec as gridspec
 import warnings
 warnings.filterwarnings("ignore")
 
-
-# ─────────────────────────────────────────────
-#  CONFIGURATION
-# ─────────────────────────────────────────────
 class Config:
     # Regime filter
     REGIME_MA_PERIOD: int = 200          # Long-term MA for bullish regime detection
@@ -44,9 +33,6 @@ class Config:
 cfg = Config()
 
 
-# ─────────────────────────────────────────────
-#  DATA LOADING
-# ─────────────────────────────────────────────
 def load_data(path: str) -> pd.DataFrame:
     """Load and validate OHLC data."""
     df = pd.read_csv(path, parse_dates=["timestamp"])
@@ -100,9 +86,6 @@ def generate_synthetic_data(n: int = 28000) -> pd.DataFrame:
     })
 
 
-# ─────────────────────────────────────────────
-#  INDICATORS
-# ─────────────────────────────────────────────
 def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
@@ -122,9 +105,8 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ─────────────────────────────────────────────
 #  SIGNAL DETECTION
-# ─────────────────────────────────────────────
+
 def is_local_low(df: pd.DataFrame, i: int) -> bool:
     """
     True if bar i is a confirmed local low:
@@ -144,9 +126,8 @@ def is_local_low(df: pd.DataFrame, i: int) -> bool:
     return bool(at_low and upward_response)
 
 
-# ─────────────────────────────────────────────
+
 #  BACKTESTER
-# ─────────────────────────────────────────────
 class Trade:
     def __init__(self, entry_bar: int, entry_price: float,
                  stop_price: float, entry_time):
@@ -198,7 +179,6 @@ def run_backtest(df: pd.DataFrame) -> tuple[list[Trade], pd.Series]:
         row = df.iloc[i]
         equity_curve.append(equity)
 
-        # ── Manage open trade ──────────────────────────────
         if active_trade is not None:
             price = row["close"]
 
@@ -227,7 +207,7 @@ def run_backtest(df: pd.DataFrame) -> tuple[list[Trade], pd.Series]:
                 trades.append(active_trade)
                 active_trade = None
 
-        # ── Look for new entry ─────────────────────────────
+        # Look for new entry 
         if active_trade is None:
             if row["is_bullish_regime"] and is_local_low(df, i):
                 entry_bar   = i + cfg.LOCAL_LOW_CONFIRM_BARS
@@ -247,9 +227,7 @@ def run_backtest(df: pd.DataFrame) -> tuple[list[Trade], pd.Series]:
     return trades, equity_series
 
 
-# ─────────────────────────────────────────────
-#  PERFORMANCE METRICS
-# ─────────────────────────────────────────────
+
 def compute_metrics(trades: list[Trade], equity: pd.Series) -> dict:
     if not trades:
         return {}
@@ -260,21 +238,21 @@ def compute_metrics(trades: list[Trade], equity: pd.Series) -> dict:
 
     total_return = equity.iloc[-1] - 1.0
 
-    # ── Annualised return ──────────────────────────────────
-    # Derived from actual trade timestamps, not bar count
+    # Annualised return
+
     start_dt = pd.to_datetime(trades[0].entry_time)
     end_dt   = pd.to_datetime(trades[-1].exit_time)
     years    = (end_dt - start_dt).days / 365.25
     ann_return = (1 + total_return) ** (1 / years) - 1 if years > 0 else 0.0
 
-    # ── Sharpe ratio (annualised) ──────────────────────────
-    # Uses per-bar PnL proxy: annualise with sqrt(bars_per_year)
+    # Sharpe ratio
+
     sharpe = (
         (pnls.mean() / pnls.std()) * np.sqrt(cfg.BARS_PER_YEAR)
         if pnls.std() > 0 else 0.0
     )
 
-    # ── Max drawdown ───────────────────────────────────────
+    # Max drawdown 
     roll_max = equity.cummax()
     max_dd   = ((equity - roll_max) / roll_max).min()
 
@@ -287,8 +265,8 @@ def compute_metrics(trades: list[Trade], equity: pd.Series) -> dict:
         "avg_loss":          losses.mean() if len(losses) else 0.0,
         "profit_factor":     wins.sum() / abs(losses.sum()) if losses.sum() != 0 else np.inf,
         "total_return":      total_return,
-        "annualised_return": ann_return,          # ← NEW
-        "years":             years,               # ← NEW
+        "annualised_return": ann_return,          
+        "years":             years,              
         "sharpe_ratio":      sharpe,
         "max_drawdown":      max_dd,
         "avg_trade_pnl":     pnls.mean(),
@@ -310,7 +288,7 @@ def print_metrics(m: dict):
     print(f"  Profit Factor      : {m['profit_factor']:>10.3f}")
     print(sep)
     print(f"  Total Return       : {m['total_return']:>+10.2%}")
-    print(f"  Annualised Return  : {m['annualised_return']:>+10.2%}")   # ← NEW
+    print(f"  Annualised Return  : {m['annualised_return']:>+10.2%}") 
     print(f"  Sharpe Ratio       : {m['sharpe_ratio']:>10.3f}")
     print(f"  Max Drawdown       : {m['max_drawdown']:>10.2%}")
     print(sep)
@@ -319,18 +297,12 @@ def print_metrics(m: dict):
     print(f"{'═'*44}\n")
 
 
-# ─────────────────────────────────────────────
-#  TRADE LOG
-# ─────────────────────────────────────────────
 def save_trade_log(trades: list[Trade], path: str):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     pd.DataFrame([t.to_dict() for t in trades]).to_csv(path, index=False)
     print(f"[Log] Trade log saved → {path}")
 
 
-# ─────────────────────────────────────────────
-#  VISUALISATION
-# ─────────────────────────────────────────────
 DARK_BG  = "#0d1117"
 PANEL_BG = "#161b22"
 GREEN    = "#3fb950"
@@ -361,7 +333,6 @@ def plot_results(df: pd.DataFrame, trades: list[Trade],
         for spine in ax.spines.values():
             spine.set_edgecolor("#30363d")
 
-    # ── Price chart (full dataset) ─────────────────────────
     idx = df.index
     ax_price.plot(idx, df["close"], color=BLUE, lw=0.5, alpha=0.9, label="Close")
     ax_price.plot(idx, df["regime_ma"], color=AMBER, lw=1.1,
@@ -383,7 +354,7 @@ def plot_results(df: pd.DataFrame, trades: list[Trade],
                     labelcolor=WHITE, loc="upper left")
     ax_price.grid(alpha=0.12, color=MUTED)
 
-    # ── Equity curve ───────────────────────────────────────
+
     eq_idx = equity.index
     ax_equity.plot(eq_idx, equity.values, color=GREEN, lw=1.2)
     ax_equity.fill_between(eq_idx, 1, equity.values,
@@ -406,7 +377,7 @@ def plot_results(df: pd.DataFrame, trades: list[Trade],
     ax_equity.set_ylabel("Equity (×)", color=MUTED, fontsize=9)
     ax_equity.grid(alpha=0.12, color=MUTED)
 
-    # ── PnL distribution ───────────────────────────────────
+
     pnls = np.array([t.pnl_pct * 100 for t in trades])
     bins = np.linspace(pnls.min(), pnls.max(), 40)
     ax_dist.hist(pnls[pnls > 0],  bins=bins, color=GREEN, alpha=0.7, label="Win")
@@ -422,7 +393,6 @@ def plot_results(df: pd.DataFrame, trades: list[Trade],
                    labelcolor=WHITE)
     ax_dist.grid(alpha=0.12, color=MUTED)
 
-    # ── Exit reason breakdown ──────────────────────────────
     reasons = pd.Series([t.exit_reason for t in trades]).value_counts()
     bar_colors = {"stop_loss": RED, "momentum_fade": AMBER, "end_of_data": MUTED}
     colors_list = [bar_colors.get(r, BLUE) for r in reasons.index]
@@ -436,7 +406,7 @@ def plot_results(df: pd.DataFrame, trades: list[Trade],
     ax_reason.set_xlabel("Count", color=MUTED, fontsize=8)
     ax_reason.grid(alpha=0.12, color=MUTED, axis="x")
 
-    # ── Summary stats box ──────────────────────────────────
+  
     stats = (
         f"Total Return  : {metrics['total_return']:+.2%}\n"
         f"Ann. Return   : {metrics['annualised_return']:+.2%}\n"   # ← NEW
@@ -463,9 +433,7 @@ def plot_results(df: pd.DataFrame, trades: list[Trade],
     plt.show()
 
 
-# ─────────────────────────────────────────────
-#  MAIN
-# ─────────────────────────────────────────────
+
 def main():
     # Load real data; fall back to synthetic if file not found
     if os.path.exists(cfg.DATA_PATH):
