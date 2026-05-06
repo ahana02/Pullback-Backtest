@@ -12,7 +12,6 @@ The project focuses on **clear thinking and transparent implementation** — no 
 |---|---|
 | Total Return | **+33.39%** |
 | Annualised Return | **+10.21%** |
-| Sharpe Ratio | 10.712 |
 | Max Drawdown | −4.22% |
 | Total Trades | 671 |
 | Win Rate | 82.0% |
