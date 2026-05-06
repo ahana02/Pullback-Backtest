@@ -10,8 +10,8 @@ The project focuses on **clear thinking and transparent implementation** — no 
 
 | Metric | Value |
 |---|---|
-| Total Return | **+33.39%** |
-| Annualised Return | **+10.21%** |
+| Total Return | +33.39% |
+| Annualised Return | +10.21% |
 | Sharpe Ratio | 1.992 |
 | Max Drawdown | −4.22% |
 | Total Trades | 671 |
@@ -240,5 +240,5 @@ Four-panel chart saved after every run:
 - **No transaction costs or slippage** — real-world returns will be lower, particularly given the high trade frequency
 - **Single instrument** — strategy behaviour on other assets is untested
 - **No walk-forward validation** — parameters were not optimised out-of-sample
-- **High Sharpe caveat** — the Sharpe of 10.7 reflects low per-trade variance on a mean-reverting pullback strategy; it would compress significantly once costs are factored in
+- **High Sharpe caveat** — the Sharpe of 1.992 reflects low per-trade variance on a mean-reverting pullback strategy; it would compress significantly once costs are factored in
 
