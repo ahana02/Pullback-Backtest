@@ -221,17 +221,7 @@ Four-panel chart saved after every run:
 - **Bottom left**: PnL distribution histogram split by wins and losses
 - **Bottom right**: Exit reason breakdown bar chart
 
----
 
-## Metrics Explanation
-
-| Metric | How it's calculated |
-|---|---|
-| **Total Return** | `equity_final − 1` (cumulative compounded return) |
-| **Annualised Return** | `(1 + total_return)^(1/years) − 1` using actual trade timestamps |
-| **Sharpe Ratio** | `(mean_pnl / std_pnl) × sqrt(BARS_PER_YEAR)` — annualised on per-bar basis |
-| **Max Drawdown** | `min((equity − equity.cummax()) / equity.cummax())` |
-| **Profit Factor** | `sum(wins) / abs(sum(losses))` — ratio > 1 means strategy is profitable |
 
 ---
 
